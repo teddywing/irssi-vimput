@@ -43,6 +43,7 @@ sub open_tmux_split {
 }
 
 
+# TODO: Find out if it's possible to do this is a command
 Irssi::signal_add_last 'gui key pressed' => sub {
 	my ($key) = @_;
 
