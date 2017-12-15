@@ -1,5 +1,7 @@
 use strict;
 
+use File::Temp qw(tempfile);
+
 use Irssi;
 
 our $VERSION = '1.00';
@@ -16,22 +18,22 @@ use constant CTRL_X => 24;
 
 
 # The location of the temporary file where prompt contents are written.
-sub tempfile {
+sub vimput_file {
 	Irssi::get_irssi_dir() . '/VIMPUT_MSG';
 }
 
 
-# Write the given string to our tempfile.
+# Write the given string to our vimput_file.
 sub write_input {
 	my ($message) = @_;
 
-	open my $handle, '>', tempfile or die $!;
+	open my $handle, '>', vimput_file or die $!;
 	print $handle $message;
 	close $handle;
 }
 
 
-# Open a Tmux split containing a Vim instance editing the tempfile.
+# Open a Tmux split containing a Vim instance editing the vimput_file.
 sub open_tmux_split {
 	if (!$ENV{TMUX}) {
 		print 'no tmux'; # TODO: Replace with Irssi print
@@ -39,8 +41,30 @@ sub open_tmux_split {
 		return;
 	}
 
-	my $command = "vim ${\tempfile}";
+	my $command = "vim ${\vimput_file}";
 	system('tmux', 'split-window', $command);
+}
+
+
+sub update_input_line_when_finished {
+	my ($handle, $filename) = tempfile();
+	print $filename;
+
+	open $handle, '<', $filename or die $!;
+	# my $x = 0;
+	while (<$handle>) {
+		print $_;
+		if ($_) {
+			print $_;
+			Irssi::gui_input_set($_);
+
+			close $handle;
+			last;
+		}
+		# print $_;
+		# sleep 2;
+		# $x++;
+	}
 }
 
 
@@ -51,5 +75,6 @@ Irssi::signal_add_last 'gui key pressed' => sub {
 	if ($key eq CTRL_X) {
 		write_input(Irssi::parse_special('$L', undef, 0));
 		open_tmux_split();
+		update_input_line_when_finished();
 	}
 };
