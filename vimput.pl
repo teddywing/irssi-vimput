@@ -12,6 +12,9 @@ our %IRSSI = {
 };
 
 
+use constant CTRL_X => 24;
+
+
 # The location of the temporary file where prompt contents are written.
 sub tempfile {
 	Irssi::get_irssi_dir() . '/VIMPUT_MSG';
@@ -31,5 +34,7 @@ sub write_input {
 Irssi::signal_add_last 'gui key pressed' => sub {
 	my ($key) = @_;
 
-	write_input(Irssi::parse_special('$L', undef, 0));
+	if ($key eq CTRL_X) {
+		write_input(Irssi::parse_special('$L', undef, 0));
+	}
 };
