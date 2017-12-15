@@ -31,10 +31,23 @@ sub write_input {
 }
 
 
+# Open a Tmux split containing a Vim instance editing the tempfile.
+sub open_tmux_split {
+	if (!$ENV{TMUX}) {
+		print 'no tmux'; # TODO: Replace with Irssi print
+		return;
+	}
+
+	my $command = "vim ${\tempfile}";
+	system('tmux', 'split-window', $command);
+}
+
+
 Irssi::signal_add_last 'gui key pressed' => sub {
 	my ($key) = @_;
 
 	if ($key eq CTRL_X) {
 		write_input(Irssi::parse_special('$L', undef, 0));
+		open_tmux_split();
 	}
 };
