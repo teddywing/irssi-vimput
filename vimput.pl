@@ -35,6 +35,7 @@ sub write_input {
 sub open_tmux_split {
 	if (!$ENV{TMUX}) {
 		print 'no tmux'; # TODO: Replace with Irssi print
+						 # MSGLEVEL_CLIENTERROR
 		return;
 	}
 
