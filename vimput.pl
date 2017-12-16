@@ -1,6 +1,7 @@
 use strict;
 
-use File::Temp qw(tempfile);
+use File::Temp qw(tmpnam tempfile);
+use POSIX qw(mkfifo);
 
 use Irssi;
 
@@ -35,36 +36,144 @@ sub write_input {
 
 # Open a Tmux split containing a Vim instance editing the vimput_file.
 sub open_tmux_split {
+	my ($filename, $fifo) = @_;
+
 	if (!$ENV{TMUX}) {
 		print 'no tmux'; # TODO: Replace with Irssi print
 						 # MSGLEVEL_CLIENTERROR
 		return;
 	}
 
-	my $command = "vim ${\vimput_file}";
+	# my $command = "vim ${\vimput_file}";
+	my $command = "vim -c 'set buftype=acwrite' -c 'read ${\vimput_file}' -c '1 delete _' -c 'autocmd BufWriteCmd <buffer> :write $fifo | set nomodified' $filename";
 	system('tmux', 'split-window', $command);
 }
 
 
 sub update_input_line_when_finished {
-	my ($handle, $filename) = tempfile();
-	print $filename;
+	# my ($handle, $filename) = tempfile();
+	# print $filename;
+	# my $tempdir = tempdir('vimput-XXXXXXXXXX');
+	# my $fifo_path = "$tempdir/fifo";
+	# my $fifo;
+	# $fifo->autoflush(1);
 
-	open $handle, '<', $filename or die $!;
+	# my $pid = fork();
+	# die $! if not defined $pid;
+
+# if ($pid == 0) { # child
+	# my $fifo_path = tmpnam();
+	# print 'F: ' . $fifo_path;
+    #
+	# mkfifo($fifo_path, 0600) or die $!;
+
+	# my $tag;
+	# my @args = ($fifo, \$tag);
+	# $tag = Irssi::input_add(
+	# 	fileno($fifo),
+	# 	Irssi::INPUT_READ,
+	# 	\&adljkhadhadfhjkl,
+	# 	\@args
+	# );
+
+	# open $fifo, '<', $fifo_path or die $!;
+	# open_tmux_split($fifo_path);
+    #
+	# $fifo->autoflush(1);
+	# while (<$fifo>) {
+	# 	# if ($_) {
+	# 		# print 'hello';
+	# 		print $_;
+	# 	# }
+	# }
+	# close $fifo;
+
+	# exit;
+	# open $fifo, '<', $fifo_path or die $!;
 	# my $x = 0;
-	while (<$handle>) {
-		print $_;
-		if ($_) {
-			print $_;
-			Irssi::gui_input_set($_);
+	# while (<$fifo>) {
+	# 	last if $x > 5;
+	# 	print $_;
+	# 	if ($_) {
+	# 		print $_;
+	# 		Irssi::gui_input_set($_);
+    #
+	# 		last;
+	# 	}
+	# 	sleep 2;
+	# 	$x++;
+	# }
+	# close $fifo;
+# }
+# else {
+# 	Irssi::pidwait_add($pid);
+# }
 
-			close $handle;
-			last;
-		}
-		# print $_;
-		# sleep 2;
-		# $x++;
+
+	# open my $handle, "cat ${\vimput_file} |" or die $!;
+	# while (<$handle>) {
+	# 	print $_;
+	# }
+	# close $handle;
+
+
+	# sub update_line {
+	# 	open my $handle, '<', vimput_file or die $!;
+	# 	while (<$handle>) {
+	# 		Irssi::gui_input_set($_);
+	# 	}
+	# 	close $handle;
+	# }
+    #
+	# my $tag = Irssi::timeout_add(1000, \&update_line);
+
+
+	# my $fuckyoumotherfucker = '/tmp/fucking-fifo';
+	# unlink $fuckyoumotherfucker;
+	# open_tmux_split($fuckyoumotherfucker);
+    #
+	# mkfifo($fuckyoumotherfucker, 0600) or die $!;
+	# open my $fifo, '<', $fuckyoumotherfucker, or die $!;
+	# while (<$fifo>) {
+	# 	print $_;
+	# }
+	# close $fifo;
+	# unlink $fuckyoumotherfucker;
+
+
+# 	my $pid = fork();
+# 	die $! if not defined $pid;
+#
+# if ($pid == 0) {
+	my $fuckyoumotherfucker = '/tmp/fucking-fifo';
+	unlink $fuckyoumotherfucker;
+	open_tmux_split('/tmp/fucking-other-file', $fuckyoumotherfucker);
+
+	mkfifo($fuckyoumotherfucker, 0600) or die $!;
+	open my $fifo, '<', $fuckyoumotherfucker, or die $!;
+	while (<$fifo>) {
+		chomp $_;
+		Irssi::gui_input_set($_);
 	}
+	close $fifo;
+	unlink $fuckyoumotherfucker;
+
+	# exit;
+# }
+# else {
+# 	Irssi::pidwait_add($pid);
+# }
+}
+
+
+sub adljkhadhadfhjkl {
+	my ($args) = @_;
+	my ($fifo, $tag) = @$args;
+
+	my $input = <$fifo>;
+	print 'I: ' . $input;
+	close $fifo;
+	Irssi::input_remove($$tag);
 }
 
 
@@ -74,7 +183,7 @@ Irssi::signal_add_last 'gui key pressed' => sub {
 
 	if ($key eq CTRL_X) {
 		write_input(Irssi::parse_special('$L', undef, 0));
-		open_tmux_split();
+		# open_tmux_split();
 		update_input_line_when_finished();
 	}
 };
