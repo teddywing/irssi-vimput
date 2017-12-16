@@ -43,10 +43,8 @@ sub write_input {
 # Open a Tmux split containing a Vim instance editing the vimput_file.
 sub open_tmux_split {
 	my ($fifo, $error_handle) = @_;
-	# my ($fifo) = @_;
 
 	if (!$ENV{TMUX}) {
-		# Irssi::print('Not running in tmux.', MSGLEVEL_CLIENTERROR);
 		print $error_handle ERROR_PREFIX . 'Not running in tmux.';
 
 		return 0;
