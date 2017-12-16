@@ -215,7 +215,6 @@ if ($pid == 0) {
 	while (my $line = <$connection>) {
 		print $write_handle $line;
 	}
-	sleep 5;
 
 	close $socket;
 
