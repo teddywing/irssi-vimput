@@ -93,14 +93,18 @@ sub update_input_line_when_finished {
 		};
 
 		mkfifo($fifo_path, 0600) or do {
+			print $write_handle ERROR_PREFIX . "Failed to make FIFO: $!";
+
 			cleanup();
-			# die $!;
+
 			POSIX::_exit(1);
 		};
 
 		open my $fifo, '<', $fifo_path or do {
+			print $write_handle ERROR_PREFIX . "Failed to open FIFO: $!";
+
 			cleanup();
-			# die $!;
+
 			POSIX::_exit(1);
 		};
 		$fifo->autoflush(1);
