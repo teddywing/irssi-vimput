@@ -142,12 +142,12 @@ sub pipe_input {
 
 	my $input = <$read_handle>;
 
-	if (index($input, ERROR_PREFIX) == 0) {
+	if (is_error_message($input)) {
 		$input = substr($input, length(ERROR_PREFIX));
 
 		Irssi::print($input, MSGLEVEL_CLIENTERROR);
 	}
-	elsif (index($input, OK_PREFIX) == 0) {
+	elsif (is_ok_message($input)) {
 		$input = substr($input, length(OK_PREFIX));
 		chomp $input;
 
@@ -165,6 +165,20 @@ sub is_child_fork {
 	my ($pid) = @_;
 
 	return $pid == 0;
+}
+
+
+sub is_error_message {
+	my ($string) = @_;
+
+	return index($string, ERROR_PREFIX) == 0;
+}
+
+
+sub is_ok_message {
+	my ($string) = @_;
+
+	return index($string, OK_PREFIX) == 0;
 }
 
 
