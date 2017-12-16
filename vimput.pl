@@ -66,40 +66,40 @@ sub update_input_line_when_finished {
 		return;
 	}
 
-if ($pid == 0) {
-	my $fifo_path = tmpnam();
+	if ($pid == 0) {
+		my $fifo_path = tmpnam();
 
-	open_tmux_split($fifo_path);
+		open_tmux_split($fifo_path);
 
-	mkfifo($fifo_path, 0600) or die $!;
+		mkfifo($fifo_path, 0600) or die $!;
 
-	open my $fifo, '<', $fifo_path or die $!;
-	$fifo->autoflush(1);
+		open my $fifo, '<', $fifo_path or die $!;
+		$fifo->autoflush(1);
 
-	while (<$fifo>) {
-		print $write_handle $_;
+		while (<$fifo>) {
+			print $write_handle $_;
+		}
+
+		close $fifo;
+
+		close $write_handle;
+
+		POSIX::_exit(0);
 	}
+	else {
+		close $write_handle;
 
-	close $fifo;
+		Irssi::pidwait_add($pid);
 
-	close $write_handle;
-
-	POSIX::_exit(0);
-}
-else {
-	close $write_handle;
-
-	Irssi::pidwait_add($pid);
-
-	my $pipe_tag;
-	my @args = ($read_handle, \$pipe_tag);
-	$pipe_tag = Irssi::input_add(
-		fileno $read_handle,
-		Irssi::INPUT_READ,
-		\&pipe_input,
-		\@args,
-	);
-}
+		my $pipe_tag;
+		my @args = ($read_handle, \$pipe_tag);
+		$pipe_tag = Irssi::input_add(
+			fileno $read_handle,
+			Irssi::INPUT_READ,
+			\&pipe_input,
+			\@args,
+		);
+	}
 }
 
 
