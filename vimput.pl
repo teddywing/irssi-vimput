@@ -185,8 +185,10 @@ if ($pid == 0) {
 	# my $fifo_path = "$tempdir/fifo";
 
 	# print $write_handle VIMPUT_IPC_COMMAND_PREFIX . $fifo_path;
-	print $command_handle VIMPUT_IPC_COMMAND_PREFIX . $fifo_path;
+	# print $command_handle $fifo_path;
 	close $command_handle;
+
+	open_tmux_split('rando', $fifo_path);
 
 	mkfifo($fifo_path, 0600) or die $!;
 
@@ -267,9 +269,9 @@ sub pipe_open_tmux_split {
 	my ($args) = @_;
 	my ($read_handle, $pipe_tag) = @$args;
 
-	my $input = <$read_handle>;
+	my $fifo_path = <$read_handle>;
 
-	print 'C: ' . $input;
+	# open_tmux_split('rando', $fifo_path);
 
 	# TODO: Add $forked to not spawn more than one children unnecessarily
 
