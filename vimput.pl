@@ -257,8 +257,9 @@ sub pipe_input {
 	my ($read_handle, $pipe_tag) = @$args;
 
 	my $input = <$read_handle>;
+	chomp $input;
 
-	print 'I: ' . $input;
+	Irssi::gui_input_set($input);
 
 	# TODO: Add $forked to not spawn more than one children unnecessarily
 
