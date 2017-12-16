@@ -20,7 +20,6 @@ use constant CTRL_X => 24;
 use constant ERROR_PREFIX => 'ERROR: ';
 use constant OK_PREFIX => 'OK: ';
 
-my $child;
 my $forked = 0;
 
 
@@ -72,7 +71,6 @@ sub open_tmux_and_update_input_line_when_finished {
 	}
 
 	my $pid = fork();
-	$child = $pid;
 
 	if (!defined $pid) {
 		Irssi::print("Failed to fork: $!", MSGLEVEL_CLIENTERROR);
