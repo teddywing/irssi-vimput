@@ -1,7 +1,6 @@
 use strict;
 
-use File::Temp qw(tmpnam tempfile tempdir);
-use IO::Socket::UNIX;
+use File::Temp qw(tmpnam);
 use POSIX qw(mkfifo);
 
 use Irssi;
