@@ -58,6 +58,9 @@ sub open_tmux_split {
 }
 
 
+# Forks a child process and opens a pipe for the child to communicate with
+# the parent. In the child process, open a Tmux split, create a FIFO pipe,
+# and send the contents of the FIFO to the parent.
 sub open_tmux_and_update_input_line_when_finished {
 	return if $forked;
 
@@ -90,6 +93,7 @@ sub open_tmux_and_update_input_line_when_finished {
 			POSIX::_exit(1);
 		};
 
+		# The input line will be sent from Vim on this FIFO.
 		mkfifo($fifo_path, 0600) or do {
 			print $write_handle ERROR_PREFIX . "Failed to make FIFO: $!";
 
@@ -134,6 +138,9 @@ sub open_tmux_and_update_input_line_when_finished {
 }
 
 
+# Read messages in the parent process from the child over a pipe. Print error
+# messages to the Irssi window. An OK message will be used to replace the
+# current input line.
 sub pipe_input {
 	my ($args) = @_;
 	my ($read_handle, $pipe_tag) = @$args;
@@ -159,6 +166,7 @@ sub pipe_input {
 }
 
 
+# Test whether `$pid` is a child process.
 sub is_child_fork {
 	my ($pid) = @_;
 
@@ -166,6 +174,7 @@ sub is_child_fork {
 }
 
 
+# Test whether `$string` starts with `ERROR_PREFIX`.
 sub is_error_message {
 	my ($string) = @_;
 
@@ -173,6 +182,7 @@ sub is_error_message {
 }
 
 
+# Test whether `$string` starts with `OK_PREFIX`.
 sub is_ok_message {
 	my ($string) = @_;
 
