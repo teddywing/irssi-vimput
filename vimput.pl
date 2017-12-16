@@ -241,7 +241,7 @@ else {
 	$p2 = Irssi::input_add(
 		fileno $fuckface,
 		Irssi::INPUT_READ,
-		\&pipe_input,
+		\&pipe_open_tmux_split,
 		\@ar2,
 	);
 }
@@ -254,12 +254,22 @@ sub pipe_input {
 
 	my $input = <$read_handle>;
 
-	if (index($input, VIMPUT_IPC_COMMAND_PREFIX) == 0) {
-		print substr $input, length(VIMPUT_IPC_COMMAND_PREFIX);
-	}
-	else {
-		print 'I: ' . $input;
-	}
+	print 'I: ' . $input;
+
+	# TODO: Add $forked to not spawn more than one children unnecessarily
+
+	close $read_handle;
+	Irssi::input_remove($$pipe_tag);
+}
+
+
+sub pipe_open_tmux_split {
+	my ($args) = @_;
+	my ($read_handle, $pipe_tag) = @$args;
+
+	my $input = <$read_handle>;
+
+	print 'C: ' . $input;
 
 	# TODO: Add $forked to not spawn more than one children unnecessarily
 
