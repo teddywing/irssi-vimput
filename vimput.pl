@@ -16,7 +16,6 @@ our %IRSSI = {
 };
 
 
-use constant VIMPUT_IPC_COMMAND_PREFIX => '%%%___VIMPUT___%%%: ';
 use constant CTRL_X => 24;
 
 
@@ -54,10 +53,9 @@ sub open_tmux_split {
 
 
 sub update_input_line_when_finished {
-	my ($read_handle, $write_handle, $command_handle, $fuckface);
+	my ($read_handle, $write_handle);
 
 	pipe($read_handle, $write_handle);
-	pipe($fuckface, $command_handle);
 
 	my $pid = fork();
 
@@ -65,14 +63,11 @@ sub update_input_line_when_finished {
 		print "Failed to fork: $!";  # TODO: Irssi print
 		close $read_handle;
 		close $write_handle;
-		close $command_handle;
-		close $fuckface;
 		return;
 	}
 
 if ($pid == 0) {
 	my $fifo_path = tmpnam();
-	close $command_handle;
 
 	open_tmux_split($fifo_path);
 
@@ -93,7 +88,6 @@ if ($pid == 0) {
 }
 else {
 	close $write_handle;
-	close $command_handle;
 
 	Irssi::pidwait_add($pid);
 
@@ -104,14 +98,6 @@ else {
 		Irssi::INPUT_READ,
 		\&pipe_input,
 		\@args,
-	);
-	my $p2;
-	my @ar2 = ($fuckface, \$p2);
-	$p2 = Irssi::input_add(
-		fileno $fuckface,
-		Irssi::INPUT_READ,
-		\&pipe_open_tmux_split,
-		\@ar2,
 	);
 }
 }
@@ -125,21 +111,6 @@ sub pipe_input {
 	chomp $input;
 
 	Irssi::gui_input_set($input);
-
-	# TODO: Add $forked to not spawn more than one children unnecessarily
-
-	close $read_handle;
-	Irssi::input_remove($$pipe_tag);
-}
-
-
-sub pipe_open_tmux_split {
-	my ($args) = @_;
-	my ($read_handle, $pipe_tag) = @$args;
-
-	my $fifo_path = <$read_handle>;
-
-	# open_tmux_split('rando', $fifo_path);
 
 	# TODO: Add $forked to not spawn more than one children unnecessarily
 
