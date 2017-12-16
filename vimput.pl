@@ -17,7 +17,10 @@ our %IRSSI = {
 
 
 use constant CTRL_X => 24;
+use constant ERROR_PREFIX => 'ERROR: ';
+use constant OK_PREFIX => 'OK: ';
 
+my $child;
 my $forked = 0;
 
 
@@ -39,34 +42,48 @@ sub write_input {
 
 # Open a Tmux split containing a Vim instance editing the vimput_file.
 sub open_tmux_split {
-	my ($fifo) = @_;
+	my ($fifo, $error_handle) = @_;
+	# my ($fifo) = @_;
 
 	if (!$ENV{TMUX}) {
-		print 'no tmux'; # TODO: Replace with Irssi print
-						 # MSGLEVEL_CLIENTERROR
-		return;
+		# Irssi::print('Not running in tmux.', MSGLEVEL_CLIENTERROR);
+		print $error_handle ERROR_PREFIX . 'Not running in tmux.';
+
+		return 0;
 	}
 
 	my $random_unused_filename = tmpnam();
 
 	my $command = "vim -c 'set buftype=acwrite' -c 'read ${\vimput_file}' -c '1 delete _' -c 'autocmd BufWriteCmd <buffer> :write $fifo | set nomodified' $random_unused_filename";
 	system('tmux', 'split-window', $command);
+
+	return 1;
 }
 
 
 sub update_input_line_when_finished {
 	return if $forked;
 
-	my ($read_handle, $write_handle);
+	my ($read_handle, $write_handle, $err_read_handle, $err_write_handle);
 
 	pipe($read_handle, $write_handle);
+	# pipe($err_read_handle, $err_write_handle);
 
-	my $pid = fork();
-
-	if (!defined $pid) {
-		print "Failed to fork: $!";  # TODO: Irssi print
+	sub cleanup {
 		close $read_handle;
 		close $write_handle;
+		# close $err_read_handle;
+		# close $err_write_handle;
+	}
+
+	my $pid = fork();
+	$child = $pid;
+
+	if (!defined $pid) {
+		Irssi::print("Failed to fork: $!", MSGLEVEL_CLIENTERROR);
+
+		cleanup();
+
 		return;
 	}
 
@@ -75,15 +92,31 @@ sub update_input_line_when_finished {
 	if (is_child_fork($pid)) {
 		my $fifo_path = tmpnam();
 
-		open_tmux_split($fifo_path);
+		open_tmux_split($fifo_path, $write_handle) or do {
+		# print $err_write_handle 'Not running in tmux.';
+			# print 'fuck';
+			# Irssi::print('fuck');
+			# print $write_handle 'ERROR: Not running in tmux.';
+			cleanup();
+			# die;
+			POSIX::_exit(1);
+		};
 
-		mkfifo($fifo_path, 0600) or die $!;
+		mkfifo($fifo_path, 0600) or do {
+			cleanup();
+			# die $!;
+			POSIX::_exit(1);
+		};
 
-		open my $fifo, '<', $fifo_path or die $!;
+		open my $fifo, '<', $fifo_path or do {
+			cleanup();
+			# die $!;
+			POSIX::_exit(1);
+		};
 		$fifo->autoflush(1);
 
 		while (<$fifo>) {
-			print $write_handle $_;
+			print $write_handle OK_PREFIX . $_;
 		}
 
 		close $fifo;
@@ -105,6 +138,15 @@ sub update_input_line_when_finished {
 			\&pipe_input,
 			\@args,
 		);
+
+		# my $err_pipe_tag;
+		# my @err_args = ($err_read_handle, \$err_pipe_tag);
+		# $err_pipe_tag = Irssi::input_add(
+		# 	fileno $err_read_handle,
+		# 	Irssi::INPUT_READ,
+		# 	\&pipe_error,
+		# 	\@err_args,
+		# );
 	}
 }
 
@@ -114,14 +156,41 @@ sub pipe_input {
 	my ($read_handle, $pipe_tag) = @$args;
 
 	my $input = <$read_handle>;
-	chomp $input;
 
-	Irssi::gui_input_set($input);
+	if (index($input, ERROR_PREFIX) == 0) {
+		$input = substr($input, length(ERROR_PREFIX));
+
+		Irssi::print($input, MSGLEVEL_CLIENTERROR);
+	}
+	elsif (index($input, OK_PREFIX) == 0) {
+		$input = substr($input, length(OK_PREFIX));
+		chomp $input;
+
+		Irssi::gui_input_set($input);
+	}
 
 	$forked = 0;
 
 	close $read_handle;
 	Irssi::input_remove($$pipe_tag);
+}
+
+
+sub pipe_error {
+	my ($args) = @_;
+	my ($err_read_handle, $err_pipe_tag) = @$args;
+
+	my $input = <$err_read_handle>;
+
+	Irssi::print($input, MSGLEVEL_CLIENTERROR);
+
+	$forked = 0;
+
+	close $err_read_handle;
+	Irssi::input_remove($$err_pipe_tag);
+
+	kill 'TERM', $child;
+	undef $child;
 }
 
 
