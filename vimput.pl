@@ -146,7 +146,7 @@ sub update_input_line_when_finished {
 	my ($read_handle, $write_handle, $command_handle, $fuckface);
 
 	pipe($read_handle, $write_handle);
-	# pipe($fuckface, $command_handle);
+	pipe($fuckface, $command_handle);
 	# pipe($read_handle, $command_handle);
 
 	# $write_handle->autoflush(1);
@@ -159,7 +159,7 @@ sub update_input_line_when_finished {
 		close $read_handle;
 		close $write_handle;
 		close $command_handle;
-		# close $fuckface;
+		close $fuckface;
 		return;
 	}
 
@@ -184,9 +184,9 @@ if ($pid == 0) {
 	# my $tempdir = tempdir('vimput.XXXXXXXXXX', TMPDIR => 1, CLEANUP => 1);
 	# my $fifo_path = "$tempdir/fifo";
 
-	print $write_handle VIMPUT_IPC_COMMAND_PREFIX . $fifo_path;
-	# print $command_handle VIMPUT_IPC_COMMAND_PREFIX . $fifo_path;
-	# close $command_handle;
+	# print $write_handle VIMPUT_IPC_COMMAND_PREFIX . $fifo_path;
+	print $command_handle VIMPUT_IPC_COMMAND_PREFIX . $fifo_path;
+	close $command_handle;
 
 	# mkfifo($fifo_path, 0600) or die $!;
     #
@@ -225,6 +225,7 @@ if ($pid == 0) {
 }
 else {
 	close $write_handle;
+	close $command_handle;
 
 	Irssi::pidwait_add($pid);
 
@@ -236,14 +237,14 @@ else {
 		\&pipe_input,
 		\@args,
 	);
-	# my $p2;
-	# my @ar2 = ($fuckface, \$p2);
-	# $p2 = Irssi::input_add(
-	# 	fileno $fuckface,
-	# 	Irssi::INPUT_READ,
-	# 	\&pipe_input,
-	# 	\@args
-	# );
+	my $p2;
+	my @ar2 = ($fuckface, \$p2);
+	$p2 = Irssi::input_add(
+		fileno $fuckface,
+		Irssi::INPUT_READ,
+		\&pipe_input,
+		\@ar2,
+	);
 }
 }
 
