@@ -59,7 +59,7 @@ sub open_tmux_split {
 }
 
 
-sub update_input_line_when_finished {
+sub open_tmux_and_update_input_line_when_finished {
 	return if $forked;
 
 	my ($read_handle, $write_handle);
@@ -188,6 +188,6 @@ Irssi::signal_add_last 'gui key pressed' => sub {
 
 	if ($key eq CTRL_X) {
 		write_input(Irssi::parse_special('$L', undef, 0));
-		update_input_line_when_finished();
+		open_tmux_and_update_input_line_when_finished();
 	}
 };
