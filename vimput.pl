@@ -254,12 +254,12 @@ sub pipe_input {
 
 	my $input = <$read_handle>;
 
-	# if (index($input, VIMPUT_IPC_COMMAND_PREFIX) == 0) {
-	# 	print substr $input, length(VIMPUT_IPC_COMMAND_PREFIX);
-	# }
-	# else {
+	if (index($input, VIMPUT_IPC_COMMAND_PREFIX) == 0) {
+		print substr $input, length(VIMPUT_IPC_COMMAND_PREFIX);
+	}
+	else {
 		print 'I: ' . $input;
-	# }
+	}
 
 	# TODO: Add $forked to not spawn more than one children unnecessarily
 
