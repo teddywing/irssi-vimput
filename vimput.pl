@@ -18,6 +18,8 @@ our %IRSSI = {
 
 use constant CTRL_X => 24;
 
+my $forked = 0;
+
 
 # The location of the temporary file where prompt contents are written.
 sub vimput_file {
@@ -53,6 +55,8 @@ sub open_tmux_split {
 
 
 sub update_input_line_when_finished {
+	return if $forked;
+
 	my ($read_handle, $write_handle);
 
 	pipe($read_handle, $write_handle);
@@ -65,6 +69,8 @@ sub update_input_line_when_finished {
 		close $write_handle;
 		return;
 	}
+
+	$forked = 1;
 
 	if (is_child_fork($pid)) {
 		my $fifo_path = tmpnam();
@@ -112,7 +118,7 @@ sub pipe_input {
 
 	Irssi::gui_input_set($input);
 
-	# TODO: Add $forked to not spawn more than one children unnecessarily
+	$forked = 0;
 
 	close $read_handle;
 	Irssi::input_remove($$pipe_tag);
