@@ -188,35 +188,35 @@ if ($pid == 0) {
 	print $command_handle VIMPUT_IPC_COMMAND_PREFIX . $fifo_path;
 	close $command_handle;
 
-	# mkfifo($fifo_path, 0600) or die $!;
-    #
-	# open my $fifo, '<', $fifo_path or die $!;
-	# $fifo->autoflush(1);
-    #
-	# while (<$fifo>) {
-	# 	print $write_handle $_;
-	# }
-    #
-	# close $fifo;
+	mkfifo($fifo_path, 0600) or die $!;
 
-	my $socket_path = $fifo_path;
+	open my $fifo, '<', $fifo_path or die $!;
+	$fifo->autoflush(1);
 
-	my $socket = IO::Socket::UNIX->new(
-		Local => $socket_path,
-		Type => SOCK_STREAM,
-		Listen => 1,
-	) or die "Failed to create socket: $!";
-
-	# $socket->blocking(0);
-
-	my $connection = $socket->accept();
-	$connection->autoflush(1);
-
-	while (my $line = <$connection>) {
-		print $write_handle $line;
+	while (<$fifo>) {
+		print $write_handle $_;
 	}
 
-	close $socket;
+	close $fifo;
+
+	# my $socket_path = $fifo_path;
+    #
+	# my $socket = IO::Socket::UNIX->new(
+	# 	Local => $socket_path,
+	# 	Type => SOCK_STREAM,
+	# 	Listen => 1,
+	# ) or die "Failed to create socket: $!";
+    #
+	# # $socket->blocking(0);
+    #
+	# my $connection = $socket->accept();
+	# $connection->autoflush(1);
+    #
+	# while (my $line = <$connection>) {
+	# 	print $write_handle $line;
+	# }
+    #
+	# close $socket;
 
 	close $write_handle;
 
