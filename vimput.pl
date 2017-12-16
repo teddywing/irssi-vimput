@@ -64,16 +64,13 @@ sub open_tmux_split {
 sub update_input_line_when_finished {
 	return if $forked;
 
-	my ($read_handle, $write_handle, $err_read_handle, $err_write_handle);
+	my ($read_handle, $write_handle);
 
 	pipe($read_handle, $write_handle);
-	# pipe($err_read_handle, $err_write_handle);
 
 	sub cleanup {
 		close $read_handle;
 		close $write_handle;
-		# close $err_read_handle;
-		# close $err_write_handle;
 	}
 
 	my $pid = fork();
@@ -93,12 +90,7 @@ sub update_input_line_when_finished {
 		my $fifo_path = tmpnam();
 
 		open_tmux_split($fifo_path, $write_handle) or do {
-		# print $err_write_handle 'Not running in tmux.';
-			# print 'fuck';
-			# Irssi::print('fuck');
-			# print $write_handle 'ERROR: Not running in tmux.';
 			cleanup();
-			# die;
 			POSIX::_exit(1);
 		};
 
@@ -138,15 +130,6 @@ sub update_input_line_when_finished {
 			\&pipe_input,
 			\@args,
 		);
-
-		# my $err_pipe_tag;
-		# my @err_args = ($err_read_handle, \$err_pipe_tag);
-		# $err_pipe_tag = Irssi::input_add(
-		# 	fileno $err_read_handle,
-		# 	Irssi::INPUT_READ,
-		# 	\&pipe_error,
-		# 	\@err_args,
-		# );
 	}
 }
 
@@ -173,24 +156,6 @@ sub pipe_input {
 
 	close $read_handle;
 	Irssi::input_remove($$pipe_tag);
-}
-
-
-sub pipe_error {
-	my ($args) = @_;
-	my ($err_read_handle, $err_pipe_tag) = @$args;
-
-	my $input = <$err_read_handle>;
-
-	Irssi::print($input, MSGLEVEL_CLIENTERROR);
-
-	$forked = 0;
-
-	close $err_read_handle;
-	Irssi::input_remove($$err_pipe_tag);
-
-	kill 'TERM', $child;
-	undef $child;
 }
 
 
