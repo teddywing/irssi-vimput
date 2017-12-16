@@ -66,7 +66,7 @@ sub update_input_line_when_finished {
 		return;
 	}
 
-	if ($pid == 0) {
+	if (is_child_fork($pid)) {
 		my $fifo_path = tmpnam();
 
 		open_tmux_split($fifo_path);
@@ -116,6 +116,13 @@ sub pipe_input {
 
 	close $read_handle;
 	Irssi::input_remove($$pipe_tag);
+}
+
+
+sub is_child_fork {
+	my ($pid) = @_;
+
+	return $pid == 0;
 }
 
 
