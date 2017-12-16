@@ -1,6 +1,7 @@
 use strict;
 
-use File::Temp qw(tmpnam tempfile);
+use File::Temp qw(tmpnam tempfile tempdir);
+use IO::Socket::UNIX;
 use POSIX qw(mkfifo);
 
 use Irssi;
@@ -15,6 +16,7 @@ our %IRSSI = {
 };
 
 
+use constant VIMPUT_IPC_COMMAND_PREFIX => '%%%___VIMPUT___%%%: ';
 use constant CTRL_X => 24;
 
 
@@ -141,9 +143,14 @@ sub update_input_line_when_finished {
 	# unlink $fuckyoumotherfucker;
 
 
-	my ($read_handle, $write_handle);
+	my ($read_handle, $write_handle, $command_handle, $fuckface);
 
 	pipe($read_handle, $write_handle);
+	# pipe($fuckface, $command_handle);
+	# pipe($read_handle, $command_handle);
+
+	# $write_handle->autoflush(1);
+	# $write_handle->blocking(0);
 
 	my $pid = fork();
 
@@ -151,6 +158,8 @@ sub update_input_line_when_finished {
 		print "Failed to fork: $!";  # TODO: Irssi print
 		close $read_handle;
 		close $write_handle;
+		close $command_handle;
+		# close $fuckface;
 		return;
 	}
 
@@ -171,7 +180,45 @@ if ($pid == 0) {
 	# close $fifo;
 	# unlink $fuckyoumotherfucker;
 
-	print $write_handle 'worked?';
+	my $fifo_path = tmpnam();
+	# my $tempdir = tempdir('vimput.XXXXXXXXXX', TMPDIR => 1, CLEANUP => 1);
+	# my $fifo_path = "$tempdir/fifo";
+
+	print $write_handle VIMPUT_IPC_COMMAND_PREFIX . $fifo_path;
+	# print $command_handle VIMPUT_IPC_COMMAND_PREFIX . $fifo_path;
+	# close $command_handle;
+
+	# mkfifo($fifo_path, 0600) or die $!;
+    #
+	# open my $fifo, '<', $fifo_path or die $!;
+	# $fifo->autoflush(1);
+    #
+	# while (<$fifo>) {
+	# 	print $write_handle $_;
+	# }
+    #
+	# close $fifo;
+
+	my $socket_path = $fifo_path;
+
+	my $socket = IO::Socket::UNIX->new(
+		Local => $socket_path,
+		Type => SOCK_STREAM,
+		Listen => 1,
+	) or die "Failed to create socket: $!";
+
+	# $socket->blocking(0);
+
+	my $connection = $socket->accept();
+	$connection->autoflush(1);
+
+	while (my $line = <$connection>) {
+		print $write_handle $line;
+	}
+	sleep 5;
+
+	close $socket;
+
 	close $write_handle;
 
 	POSIX::_exit(0);
@@ -189,6 +236,14 @@ else {
 		\&pipe_input,
 		\@args,
 	);
+	# my $p2;
+	# my @ar2 = ($fuckface, \$p2);
+	# $p2 = Irssi::input_add(
+	# 	fileno $fuckface,
+	# 	Irssi::INPUT_READ,
+	# 	\&pipe_input,
+	# 	\@args
+	# );
 }
 }
 
@@ -198,7 +253,16 @@ sub pipe_input {
 	my ($read_handle, $pipe_tag) = @$args;
 
 	my $input = <$read_handle>;
-	print 'I: ' . $input;
+
+	# if (index($input, VIMPUT_IPC_COMMAND_PREFIX) == 0) {
+	# 	print substr $input, length(VIMPUT_IPC_COMMAND_PREFIX);
+	# }
+	# else {
+		print 'I: ' . $input;
+	# }
+
+	# TODO: Add $forked to not spawn more than one children unnecessarily
+
 	close $read_handle;
 	Irssi::input_remove($$pipe_tag);
 }
