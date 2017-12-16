@@ -38,7 +38,7 @@ sub write_input {
 
 # Open a Tmux split containing a Vim instance editing the vimput_file.
 sub open_tmux_split {
-	my ($filename, $fifo) = @_;
+	my ($fifo) = @_;
 
 	if (!$ENV{TMUX}) {
 		print 'no tmux'; # TODO: Replace with Irssi print
@@ -46,8 +46,10 @@ sub open_tmux_split {
 		return;
 	}
 
+	my $random_unused_filename = tmpnam();
+
 	# my $command = "vim ${\vimput_file}";
-	my $command = "vim -c 'set buftype=acwrite' -c 'read ${\vimput_file}' -c '1 delete _' -c 'autocmd BufWriteCmd <buffer> :write $fifo | set nomodified' $filename";
+	my $command = "vim -c 'set buftype=acwrite' -c 'read ${\vimput_file}' -c '1 delete _' -c 'autocmd BufWriteCmd <buffer> :write $fifo | set nomodified' $random_unused_filename";
 	system('tmux', 'split-window', $command);
 }
 
@@ -188,7 +190,7 @@ if ($pid == 0) {
 	# print $command_handle $fifo_path;
 	close $command_handle;
 
-	open_tmux_split('rando', $fifo_path);
+	open_tmux_split($fifo_path);
 
 	mkfifo($fifo_path, 0600) or die $!;
 
