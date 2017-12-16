@@ -141,39 +141,66 @@ sub update_input_line_when_finished {
 	# unlink $fuckyoumotherfucker;
 
 
-# 	my $pid = fork();
-# 	die $! if not defined $pid;
-#
-# if ($pid == 0) {
-	my $fuckyoumotherfucker = '/tmp/fucking-fifo';
-	unlink $fuckyoumotherfucker;
-	open_tmux_split('/tmp/fucking-other-file', $fuckyoumotherfucker);
+	my ($read_handle, $write_handle);
 
-	mkfifo($fuckyoumotherfucker, 0600) or die $!;
-	open my $fifo, '<', $fuckyoumotherfucker, or die $!;
-	while (<$fifo>) {
-		chomp $_;
-		Irssi::gui_input_set($_);
+	pipe($read_handle, $write_handle);
+
+	my $pid = fork();
+
+	if (!defined $pid) {
+		print "Failed to fork: $!";  # TODO: Irssi print
+		close $read_handle;
+		close $write_handle;
+		return;
 	}
-	close $fifo;
-	unlink $fuckyoumotherfucker;
 
-	# exit;
-# }
-# else {
-# 	Irssi::pidwait_add($pid);
-# }
+if ($pid == 0) {
+	# my $fuckyoumotherfucker = '/tmp/fucking-fifo';
+	# unlink $fuckyoumotherfucker;
+    #
+	# # TODO: This needs to be done in the parent
+	# open_tmux_split('/tmp/fucking-other-file', $fuckyoumotherfucker);
+    #
+	# mkfifo($fuckyoumotherfucker, 0600) or die $!;
+	# open my $fifo, '<', $fuckyoumotherfucker, or die $!;
+	# while (<$fifo>) {
+	# 	chomp $_;
+	# 	# Irssi::gui_input_set($_);
+	# 	print $write_handle $_;
+	# }
+	# close $fifo;
+	# unlink $fuckyoumotherfucker;
+
+	print $write_handle 'worked?';
+	close $write_handle;
+
+	POSIX::_exit(0);
+}
+else {
+	close $write_handle;
+
+	Irssi::pidwait_add($pid);
+
+	my $pipe_tag;
+	my @args = ($read_handle, \$pipe_tag);
+	$pipe_tag = Irssi::input_add(
+		fileno $read_handle,
+		Irssi::INPUT_READ,
+		\&pipe_input,
+		\@args,
+	);
+}
 }
 
 
-sub adljkhadhadfhjkl {
+sub pipe_input {
 	my ($args) = @_;
-	my ($fifo, $tag) = @$args;
+	my ($read_handle, $pipe_tag) = @$args;
 
-	my $input = <$fifo>;
+	my $input = <$read_handle>;
 	print 'I: ' . $input;
-	close $fifo;
-	Irssi::input_remove($$tag);
+	close $read_handle;
+	Irssi::input_remove($$pipe_tag);
 }
 
 
