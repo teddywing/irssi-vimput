@@ -189,12 +189,7 @@ sub is_ok_message {
 }
 
 
-# TODO: Find out if it's possible to do this is a command
-Irssi::signal_add_last 'gui key pressed' => sub {
-	my ($key) = @_;
-
-	if ($key eq CTRL_X) {
-		write_input(Irssi::parse_special('$L', undef, 0));
-		open_tmux_and_update_input_line_when_finished();
-	}
-};
+Irssi::command_bind('vimput' => sub {
+	write_input(Irssi::parse_special('$L', undef, 0));
+	open_tmux_and_update_input_line_when_finished();
+});
