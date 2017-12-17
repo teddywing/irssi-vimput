@@ -42,7 +42,6 @@ our %IRSSI = {
 };
 
 
-use constant CTRL_X => 24;
 use constant ERROR_PREFIX => 'ERROR: ';
 use constant OK_PREFIX => 'OK: ';
 
