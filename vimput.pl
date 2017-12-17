@@ -1,3 +1,30 @@
+# vimput.pl
+#
+# Opens the current input line in a new Tmux split in Vim. When the Vim
+# buffer is written, Irssi's prompt will be updated from the contents of the
+# buffer.
+#
+# **Note:** In order to use this script, you'll have to make a key binding to
+# Vimput. For example, to bind Ctrl-X:
+#
+#     /BIND ^X command script exec Irssi::Script::vimput::vimput
+#
+#
+# Copyright (c) 2017 Teddy Wing
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
 use strict;
 
 use File::Temp qw(tmpnam);
