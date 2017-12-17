@@ -212,6 +212,7 @@ HELP
 });
 
 
+# Main entrypoint.
 sub vimput {
 	write_input(Irssi::parse_special('$L', undef, 0));
 	open_tmux_and_update_input_line_when_finished();
