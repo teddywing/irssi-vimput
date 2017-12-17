@@ -189,11 +189,12 @@ sub is_ok_message {
 }
 
 
-Irssi::command_bind('help', sub {
-	if ($_[0] !~ /^vimput\s*$/) {
-		return;
-	}
-
+# Since we don't provide a command, we have to do some tricks to print help
+# output. /HELP won't list us in its output, but you can still use
+# `/help vimput`. While a `command_bind` to 'help' would work, it doesn't give
+# us completion for 'vimput'. Here, we hack the subcommand functionality to put
+# us in the completion list for `/help`.
+Irssi::command_bind('help vimput', sub {
 	my $help = <<HELP;
 %9Details:%9
 
@@ -208,6 +209,16 @@ Irssi::command_bind('help', sub {
 HELP
 
 	Irssi::print($help, MSGLEVEL_CLIENTCRAP);
+});
+
+Irssi::command_bind('help', sub {
+	my ($data, $server, $item) = @_;
+
+	if ($data !~ /^vimput\s*$/) {
+		return;
+	}
+
+	Irssi::command_runsub('help', $data, $server, $item);
 	Irssi::signal_stop();
 });
 
