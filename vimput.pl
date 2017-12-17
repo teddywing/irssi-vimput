@@ -189,6 +189,33 @@ sub is_ok_message {
 }
 
 
+Irssi::command_bind('help', sub {
+	if ($_[0] !~ /^vimput\s*$/) {
+		return;
+	}
+
+	my $help = <<HELP;
+%9Syntax:%9
+
+VIMPUT
+
+%9Details:%9
+
+    Opens the current input line in a new Tmux split in Vim. When the Vim
+    buffer is written, Irssi's prompt will be updated from the contents of the
+    buffer.
+
+    %9Note:%9 In order to use this script, you'll have to make a key binding to
+    Vimput. For example:
+
+        /BIND ^X command vimput
+HELP
+
+	Irssi::print($help, MSGLEVEL_CLIENTCRAP);
+	Irssi::signal_stop();
+});
+
+
 Irssi::command_bind('vimput' => sub {
 	write_input(Irssi::parse_special('$L', undef, 0));
 	open_tmux_and_update_input_line_when_finished();
