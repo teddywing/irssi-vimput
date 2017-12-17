@@ -195,10 +195,6 @@ Irssi::command_bind('help', sub {
 	}
 
 	my $help = <<HELP;
-%9Syntax:%9
-
-VIMPUT
-
 %9Details:%9
 
     Opens the current input line in a new Tmux split in Vim. When the Vim
@@ -206,9 +202,9 @@ VIMPUT
     buffer.
 
     %9Note:%9 In order to use this script, you'll have to make a key binding to
-    Vimput. For example:
+    Vimput. For example, to bind Ctrl-X:
 
-        /BIND ^X command vimput
+        /BIND ^X command script exec Irssi::Script::vimput::vimput
 HELP
 
 	Irssi::print($help, MSGLEVEL_CLIENTCRAP);
@@ -216,7 +212,7 @@ HELP
 });
 
 
-Irssi::command_bind('vimput' => sub {
+sub vimput {
 	write_input(Irssi::parse_special('$L', undef, 0));
 	open_tmux_and_update_input_line_when_finished();
-});
+}
