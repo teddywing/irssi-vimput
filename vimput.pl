@@ -37,7 +37,7 @@ our %IRSSI = {
 	authors     => 'Teddy Wing',
 	contact     => 'irssi@teddywing.com',
 	name        => 'Vimput',
-	description => '',
+	description => 'Edit Irssi messages in Vim.',
 	license     => 'GPL',
 };
 
