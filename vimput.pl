@@ -66,7 +66,7 @@ sub write_input {
 
 # Open a Tmux split containing a Vim instance editing the vimput_file.
 sub open_tmux_split {
-	my ($fifo, $error_handle) = @_;
+	my ($fifo, $error_handle, $cursor_position) = @_;
 
 	if (!$ENV{TMUX}) {
 		print $error_handle ERROR_PREFIX . 'Not running in tmux.';
@@ -76,7 +76,7 @@ sub open_tmux_split {
 
 	my $random_unused_filename = tmpnam();
 
-	my $command = "vim -c 'set buftype=acwrite' -c 'read ${\vimput_file}' -c '1 delete _' -c 'autocmd BufWriteCmd <buffer> :write $fifo | set nomodified' $random_unused_filename";
+	my $command = "vim -c 'set buftype=acwrite' -c 'read ${\vimput_file}' -c '1 delete _' -c 'normal! ${cursor_position}l' -c 'autocmd BufWriteCmd <buffer> :write $fifo | set nomodified' $random_unused_filename";
 	system('tmux', 'split-window', $command);
 
 	return 1;
@@ -88,6 +88,8 @@ sub open_tmux_split {
 # and send the contents of the FIFO to the parent.
 sub open_tmux_and_update_input_line_when_finished {
 	return if $forked;
+
+	my ($cursor_position) = @_;
 
 	my ($read_handle, $write_handle);
 
@@ -113,7 +115,7 @@ sub open_tmux_and_update_input_line_when_finished {
 	if (is_child_fork($pid)) {
 		my $fifo_path = tmpnam();
 
-		open_tmux_split($fifo_path, $write_handle) or do {
+		open_tmux_split($fifo_path, $write_handle, $cursor_position) or do {
 			cleanup();
 			POSIX::_exit(1);
 		};
@@ -251,6 +253,8 @@ Irssi::command_bind('help', sub {
 
 # Main entrypoint.
 sub vimput {
+	my $cursor_position = Irssi::gui_input_get_pos();
+
 	write_input(Irssi::parse_special('$L', undef, 0));
-	open_tmux_and_update_input_line_when_finished();
+	open_tmux_and_update_input_line_when_finished($cursor_position);
 }
