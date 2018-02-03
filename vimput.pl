@@ -32,7 +32,7 @@ use POSIX qw(mkfifo);
 
 use Irssi;
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 our %IRSSI = {
 	authors     => 'Teddy Wing',
 	contact     => 'irssi@teddywing.com',
